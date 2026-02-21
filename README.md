@@ -1,2 +1,3 @@
-# crypto-stream-lakehouse
-Docker (Kafka, Airflow, ingestor)  DAG’и Airflow  код ingestion  Databricks jobs / notebooks  DDL SQL  README
+﻿# crypto-stream-lakehouse
+
+Local: Kafka + Airflow (Docker). Processing: Databricks + Delta (Bronze/Silver/Gold).
