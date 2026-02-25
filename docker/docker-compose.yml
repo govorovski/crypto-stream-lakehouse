@@ -35,6 +35,14 @@ services:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
+    command:
+      - "postgres"
+      - "-c"
+      - "log_statement=ddl"
+      - "-c"
+      - "log_min_duration_statement=100" #log query duration that long 100ms
+      - "-c"
+      - "log_line_prefix=%m [%p] %u@%d "
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U airflow"]
       interval: 5s
@@ -50,7 +58,8 @@ services:
     image: apache/airflow:2.9.3
     container_name: airflow-init
     depends_on:
-      - airflow-postgres
+      airflow-postgres:
+        condition: service_healthy
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
@@ -88,14 +97,17 @@ services:
       - airflow_logs:/opt/airflow/logs
     ports:
       - "8080:8080"
-    command: webserver
+    command: >
+      bash -c "airflow db check-migrations && exec airflow webserver"
 
   airflow-scheduler:
     image: apache/airflow:2.9.3
     container_name: airflow-scheduler
     depends_on:
-      - airflow-postgres
-      - airflow-init
+      airflow-postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
@@ -103,7 +115,8 @@ services:
     volumes:
       - ../dags:/opt/airflow/dags
       - airflow_logs:/opt/airflow/logs
-    command: scheduler
+    command: >
+      bash -c "airflow db check-migrations && exec airflow scheduler"
 
   ingestor:
     image: python:3.11-slim
