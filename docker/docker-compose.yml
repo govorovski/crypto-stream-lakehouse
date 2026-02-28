@@ -1,6 +1,6 @@
 services:
   kafka:
-    image: apache/kafka:3.8.1
+    image: apache/kafka:4.2.0
     container_name: kafka
     hostname: kafka
     ports:
@@ -29,7 +29,7 @@ services:
       - kafka_data:/var/lib/kafka/data
 
   airflow-postgres:
-    image: postgres:15
+    image: postgres:18.3
     container_name: airflow-postgres
     environment:
       POSTGRES_USER: airflow
@@ -49,13 +49,13 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - airflow_pgdata:/var/lib/postgresql/data
+      - airflow_pgdata:/var/lib/postgresql
     ports:
     #<port in PC>:<Port in container>
       - "5433:5432"
 
   airflow-init:
-    image: apache/airflow:2.9.3
+    image: apache/airflow:3.1.7
     container_name: airflow-init
     depends_on:
       airflow-postgres:
@@ -79,9 +79,9 @@ services:
         --role Admin \
         --email admin@example.com || true
       '
-  airflow-webserver:
-    image: apache/airflow:2.9.3
-    container_name: airflow-webserver
+  airflow-api-server:
+    image: apache/airflow:3.1.7
+    container_name: airflow-api-server
     depends_on:
       airflow-postgres:
         # race condition
@@ -98,10 +98,10 @@ services:
     ports:
       - "8080:8080"
     command: >
-      bash -c "airflow db check-migrations && exec airflow webserver"
+      bash -c "airflow db check-migrations && exec airflow api-server"
 
   airflow-scheduler:
-    image: apache/airflow:2.9.3
+    image: apache/airflow:3.1.7
     container_name: airflow-scheduler
     depends_on:
       airflow-postgres:
@@ -156,6 +156,7 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
 
+#Named volume docker-managed storage
 volumes:
   kafka_data:
   airflow_pgdata:
