@@ -1,4 +1,13 @@
 services:
+  kafka-init:
+    image: apache/kafka:4.2.0
+    container_name: kafka-init
+    depends_on:
+      - kafka
+    entrypoint: ["/bin/bash","-lc"]
+    command: >
+      "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic trades_raw --partitions 6 --replication-factor 1"
+
   kafka:
     image: apache/kafka:4.2.0
     container_name: kafka
@@ -119,30 +128,27 @@ services:
       bash -c "airflow db check-migrations && exec airflow scheduler"
 
   ingestor:
-    image: python:3.11-slim
+    build:
+      context: ../src/ingestor
     container_name: ingestor
-    working_dir: /app
-    volumes:
-      - ../src/ingestor:/app
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_TOPIC: trades_raw
+      SYMBOLS: BTCUSDT,ETHUSDT
     depends_on:
+      - kafka-init
       - kafka
-    command: ["bash", "-lc", "python -V && sleep infinity"]
 
   kafka-to-s3:
-    image: python:3.11-slim
+    build:
+      context: ../src/kafka_to_s3
     container_name: kafka-to-s3
-    working_dir: /app
-    volumes:
-      - ../src/kafka_to_s3:/app
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_TOPIC: trades_raw
+      KAFKA_GROUP_ID: kafka-to-s3-dev
     depends_on:
       - kafka
-    command: ["bash", "-lc", "python -V && sleep infinity"]
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
