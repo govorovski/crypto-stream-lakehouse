@@ -12,8 +12,11 @@ services:
     depends_on:
       - loki
     volumes:
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      # Access to the Docker API (important!)
+      - /var/run/docker.sock:/var/run/docker.sock
+      # config promtail
       - ./promtail-config.yaml:/etc/promtail/config.yaml:ro
+      # Read positions
       - promtail_positions:/tmp
     command: -config.file=/etc/promtail/config.yaml
 
