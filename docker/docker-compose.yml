@@ -135,6 +135,8 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_TOPIC: trades_raw
       SYMBOLS: BTCUSDT,ETHUSDT
+      SOURCE: binance
+      EXCHANGE: binance_spot
     depends_on:
       - kafka-init
       - kafka
@@ -147,8 +149,12 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_TOPIC: trades_raw
       KAFKA_GROUP_ID: kafka-to-s3-dev
+      LANDING_DIR: /landing/trades_raw
+      BATCH_SECONDS: "10"
     depends_on:
       - kafka
+    volumes:
+      - ../landing:/landing
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
