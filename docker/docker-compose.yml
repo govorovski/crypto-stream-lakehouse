@@ -36,6 +36,12 @@ services:
       KAFKA_CLUSTER_ID: "4L6g3nShT-eMCtK--X86sw"
     volumes:
       - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
 
   airflow-postgres:
     image: postgres:18.3
@@ -138,8 +144,10 @@ services:
       SOURCE: binance
       EXCHANGE: binance_spot
     depends_on:
-      - kafka-init
-      - kafka
+      kafka-init:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
 
   kafka-to-s3:
     build:
@@ -159,7 +167,10 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_REGION: ${AWS_REGION}
     depends_on:
-      - kafka
+      kafka-init:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
     volumes:
       - ../landing:/landing
 
