@@ -149,8 +149,15 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_TOPIC: trades_raw
       KAFKA_GROUP_ID: kafka-to-s3-dev
-      LANDING_DIR: /landing/trades_raw
+      S3_BUCKET: crypto-stream-lakehouse-landing
+      S3_PREFIX: landing/trades_raw/
       BATCH_SECONDS: "10"
+      MAX_RECORDS: "5000"
+      STAT_EVERY: "5"
+      LOG_LEVEL: INFO
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
     depends_on:
       - kafka
     volumes:
